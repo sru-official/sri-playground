@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sri’s Playground</title>
+<style>
+  :root{
+    --bg1:#0ea5e9; --bg2:#a78bfa; --card:#ffffffee; --text:#0f172a; --muted:#475569; --accent:#14b8a6;
+  }
+  .dark{
+    --bg1:#0b1020; --bg2:#111827; --card:#0b1220ee; --text:#e5e7eb; --muted:#94a3b8; --accent:#22d3ee;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+    color:var(--text); overflow-x:hidden;
+    background: radial-gradient(1200px 800px at 10% -10%, var(--bg1), transparent 60%),
+                radial-gradient(900px 700px at 110% 30%, var(--bg2), transparent 55%),
+                linear-gradient(120deg, rgba(255,255,255,.08), rgba(255,255,255,0));
+  }
+  /* Floating animated gradient veil */
+  .veil{
+    position:fixed; inset:-20vmax; pointer-events:none; filter: blur(80px) saturate(120%);
+    background: conic-gradient(from 0deg, #f472b6, #60a5fa, #34d399, #f59e0b, #f472b6);
+    opacity:.15; animation: spin 16s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg);} }
+
+  header{
+    width:min(1100px, 92%); margin: 32px auto 12px; display:flex; align-items:center; gap:12px; justify-content:space-between;
+  }
+  .brand{display:flex; align-items:center; gap:12px}
+  .logo{
+    width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#8b5cf6);
+    box-shadow:0 10px 30px rgba(0,0,0,.25); display:grid; place-items:center; color:white; font-weight:900;
+  }
+  .title{font-size:clamp(18px,3vw,22px);font-weight:700; letter-spacing:.2px}
+  .controls{display:flex; gap:10px; align-items:center}
+  button, .chip{
+    border:0; padding:10px 14px; border-radius:12px; font-weight:600; cursor:pointer;
+    background:var(--card); color:var(--text); box-shadow: 0 6px 18px rgba(2,6,23,.12);
+    transition: transform .1s ease, box-shadow .2s ease, background .2s ease;
+  }
+  button:hover{ transform: translateY(-1px); box-shadow:0 10px 24px rgba(2,6,23,.18);}
+  .ghost{ background:transparent; border:1px solid rgba(148,163,184,.35); }
+  .pill{ border-radius:999px }
+
+  main{ width:min(1100px, 92%); margin: 10px auto 80px; position:relative; }
+  .hero{
+    display:grid; grid-template-columns: 1.2fr .8fr; gap:18px; align-items:stretch;
+  }
+  @media (max-width:900px){ .hero{ grid-template-columns: 1fr; } }
+
+  .card{
+    background:var(--card); border:1px solid rgba(148,163,184,.25); border-radius:22px; padding:22px;
+    box-shadow: 0 20px 50px rgba(2,6,23,.12);
+  }
+  .card h2{ margin:0 0 8px; font-size:clamp(22px,3vw,28px)}
+  .muted{ color:var(--muted); font-size:14px }
+
+  .name-line{ font-size: clamp(28px, 6vw, 48px); font-weight:900; line-height:1.05; margin:6px 0 10px}
+  .accent{ background: linear-gradient(90deg, var(--accent), #8b5cf6); -webkit-background-clip:text; background-clip:text; color:transparent }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+  input[type="text"]{
+    outline:none; border:1px solid rgba(148,163,184,.5); background:transparent; color:var(--text);
+    padding:10px 14px; border-radius:12px; min-width: 200px; font-weight:600;
+  }
+
+  /* Project grid with tilt */
+  .grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; margin-top:12px }
+  @media (max-width:900px){ .grid{ grid-template-columns: 1fr 1fr } }
+  @media (max-width:600px){ .grid{ grid-template-columns: 1fr } }
+  .tile{
+    border-radius:18px; padding:16px; background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.75));
+    border:1px solid rgba(148,163,184,.25); min-height:120px; transform-style: preserve-3d;
+    transition: transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 12px 30px rgba(2,6,23,.10);
+    position:relative; overflow:hidden;
+  }
+  .dark .tile{ background:linear-gradient(180deg, rgba(11,18,32,.95), rgba(11,18,32,.8)); }
+  .tile:hover{ box-shadow:0 18px 38px rgba(2,6,23,.20); }
+  .tile h3{ margin:0 0 6px; font-size:18px }
+  .badge{ position:absolute; top:10px; right:10px; font-size:12px; padding:6px 8px; border-radius:999px; background:rgba(20,184,166,.18); border:1px solid rgba(20,184,166,.35) }
+
+  /* Quote box */
+  .quote{
+    font-size:18px; line-height:1.5; border-left:3px solid var(--accent); padding-left:12px; margin:10px 0 0;
+  }
+
+  /* Canvas (click-to-stars) */
+  #stars{ position:fixed; inset:0; z-index:-1; }
+
+  footer{ width:min(1100px,92%); margin: 20px auto 50px; text-align:center; color:var(--muted); }
+
+  /* Tiny helper util */
+  .sm{ font-size:12px }
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div class="veil" aria-hidden="true"></div>
+
+<header>
+  <div class="brand">
+    <div class="logo">S</div>
+    <div class="title">Sri’s Playground</div>
+  </div>
+  <div class="controls">
+    <button id="theme" class="pill" title="Toggle theme">🌗 Theme</button>
+    <button id="reset" class="ghost pill" title="Reset saved data">↺ Reset</button>
+    <a class="ghost pill" href="#" id="saveFile" title="Download this page">⬇ Save</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="card">
+      <h2>Welcome</h2>
+      <div class="muted sm">Personal site, but make it playful.</div>
+      <div class="name-line">Hey, I’m <span id="who" class="accent">Sri</span> 👋</div>
+      <div class="muted">Engineer-in-progress, ideas-in-excess. Tap, type, try things.</div>
+
+      <div class="row">
+        <input id="name" type="text" placeholder="Type your name…" />
+        <button id="apply" class="pill">Set Name</button>
+        <div class="chip pill" id="randomize">🎲 Surprise palette</div>
+      </div>
+
+      <div class="row">
+        <div class="chip pill" data-chip>HTML</div>
+        <div class="chip pill" data-chip>CSS</div>
+        <div class="chip pill" data-chip>Debugging</div>
+        <div class="chip pill" data-chip>Tea > Coffee</div>
+      </div>
+
+      <div class="quote" id="quote">“Code thoda, vibe zyada.” — also me</div>
+      <div class="row">
+        <button id="newQuote" class="pill">✨ New Quote</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Mini Projects</h2>
+      <div class="muted sm">Hover for tilt. Click to interact.</div>
+      <div class="grid" id="grid">
+        <div class="tile" data-tilt>
+          <div class="badge">#1</div>
+          <h3>Focus Timer</h3>
+          <div class="muted">25/5 Pomodoro that beeps (soon). For now, it counts.</div>
+          <div class="row" style="margin-top:10px">
+            <button class="pill sm" data-action="timer">Start</button>
+            <span class="muted sm" id="tread">00:00</span>
+          </div>
+        </div>
+
+        <div class="tile" data-tilt>
+          <div class="badge">#2</div>
+          <h3>Color Picker</h3>
+          <div class="muted">Pick a color, copy hex.</div>
+          <div class="row" style="margin-top:10px">
+            <input type="color" id="pick" />
+            <button class="pill sm" id="copyHex">Copy</button>
+            <span class="muted sm" id="hexShow">#14b8a6</span>
+          </div>
+        </div>
+
+        <div class="tile" data-tilt>
+          <div class="badge">#3</div>
+          <h3>Quick Notes</h3>
+          <div class="muted">Local & offline. Refresh-safe.</div>
+          <div class="row" style="margin-top:10px; width:100%">
+            <input id="note" type="text" placeholder="Type & save…" style="flex:1" />
+            <button class="pill sm" id="saveNote">Save</button>
+          </div>
+          <div class="muted sm" id="notesList" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Made with 💖 by <span id="footName">Sri</span> • Click anywhere for ⭐ • Try the Konami code 😉
+</footer>
+
+<script>
+  // ===== Utility: Local Storage helpers =====
+  const store = (k,v)=>localStorage.setItem(k, JSON.stringify(v));
+  const load  = (k,d=null)=>{ try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } };
+
+  // ===== Personalization =====
+  const who = document.getElementById('who');
+  const footName = document.getElementById('footName');
+  const nameInput = document.getElementById('name');
+  const applyBtn = document.getElementById('apply');
+
+  function setName(n){
+    const clean = (n||'').trim() || 'Sri';
+    who.textContent = clean; footName.textContent = clean;
+    store('name', clean);
+  }
+  applyBtn.addEventListener('click', ()=> setName(nameInput.value));
+  nameInput.addEventListener('keydown', e=>{ if(e.key==='Enter') setName(nameInput.value) });
+
+  // ===== Theme toggle =====
+  const themeBtn = document.getElementById('theme');
+  function setTheme(mode){
+    document.documentElement.classList.toggle('dark', mode==='dark');
+    store('theme', mode);
+  }
+  themeBtn.addEventListener('click', ()=>{
+    const now = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+    setTheme(now);
+  });
+
+  // ===== Random palette (tweaks CSS vars) =====
+  const randBtn = document.getElementById('randomize');
+  function rnd(){ return Math.floor(Math.random()*360) }
+  randBtn.addEventListener('click', ()=>{
+    const h1=rnd(), h2=rnd();
+    const root = document.documentElement;
+    root.style.setProperty('--bg1', `hsl(${h1} 85% 60%)`);
+    root.style.setProperty('--bg2', `hsl(${h2} 70% 55%)`);
+    root.style.setProperty('--accent', `hsl(${(h1+h2)/2} 80% 55%)`);
+  });
+
+  // ===== Quote generator =====
+  const QUOTES = [
+    "“Code thoda, vibe zyada.”",
+    "“Ship fast, break nada.”",
+    "“Pixels first, perfection later.”",
+    "“CSS is just makeup with math.”",
+    "“Zaroori nahi har cheez framework ho.”",
+    "“Read docs. Then ignore half.”",
+  ];
+  const qEl = document.getElementById('quote');
+  document.getElementById('newQuote').addEventListener('click', ()=>{
+    qEl.textContent = QUOTES[Math.floor(Math.random()*QUOTES.length)];
+  });
+
+  // ===== Tilt effect on tiles =====
+  document.querySelectorAll('[data-tilt]').forEach(tile=>{
+    tile.addEventListener('mousemove', e=>{
+      const r = tile.getBoundingClientRect();
+      const x = ((e.clientX - r.left)/r.width - 0.5) * 12; // deg
+      const y = ((e.clientY - r.top)/r.height - 0.5) * -12;
+      tile.style.transform = `perspective(700px) rotateX(${y}deg) rotateY(${x}deg) translateZ(0)`;
+    });
+    tile.addEventListener('mouseleave', ()=> tile.style.transform = 'translateZ(0)');
+  });
+
+  // ===== Mini Project: Timer =====
+  let timer=null, secs=0;
+  const tread = document.getElementById('tread');
+  function fmt(s){ const m=String(Math.floor(s/60)).padStart(2,'0'); const ss=String(s%60).padStart(2,'0'); return `${m}:${ss}` }
+  document.querySelector('[data-action="timer"]').addEventListener('click', ()=>{
+    if(timer){ clearInterval(timer); timer=null; secs=0; tread.textContent='00:00'; return; }
+    timer = setInterval(()=>{ secs++; tread.textContent = fmt(secs) }, 1000);
+  });
+
+  // ===== Mini Project: Color Picker =====
+  const picker = document.getElementById('pick');
+  const hexShow = document.getElementById('hexShow');
+  picker.addEventListener('input', ()=> hexShow.textContent = picker.value.toLowerCase());
+  document.getElementById('copyHex').addEventListener('click', async ()=>{
+    await navigator.clipboard.writeText(hexShow.textContent);
+    hexShow.textContent = hexShow.textContent + " ✓";
+    setTimeout(()=> hexShow.textContent = picker.value.toLowerCase(), 600);
+  });
+
+  // ===== Mini Project: Notes (localStorage) =====
+  const noteIn = document.getElementById('note');
+  const notesList = document.getElementById('notesList');
+  function renderNotes(){
+    const notes = load('notes', []);
+    notesList.innerHTML = notes.map((t,i)=>`<span class="chip sm pill" data-note="${i}" title="Click to delete">${t}</span>`).join(' ') || '<span class="muted sm">No notes yet.</span>';
+    notesList.querySelectorAll('[data-note]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const idx = Number(el.getAttribute('data-note'));
+        const arr = load('notes', []);
+        arr.splice(idx,1); store('notes', arr); renderNotes();
+      });
+    })
+  }
+  renderNotes();
+  document.getElementById('saveNote').addEventListener('click', ()=>{
+    const t = (noteIn.value||'').trim(); if(!t) return;
+    const arr = load('notes', []); arr.unshift(t); store('notes', arr); noteIn.value=''; renderNotes();
+  });
+
+  // ===== Click-to-stars canvas =====
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let W=canvas.width=innerWidth, H=canvas.height=innerHeight;
+  addEventListener('resize', ()=>{ W=canvas.width=innerWidth; H=canvas.height=innerHeight; });
+  const stars=[];
+  function spawn(x,y){
+    const n=18;
+    for(let i=0;i<n;i++){
+      stars.push({ x, y, vx:(Math.random()-0.5)*4, vy:(Math.random()-0.5)*4, a:1, r: Math.random()*2+1 });
+    }
+  }
+  addEventListener('click', e=> spawn(e.clientX, e.clientY));
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    for(let i=stars.length-1;i>=0;i--){
+      const s=stars[i];
+      s.x+=s.vx; s.y+=s.vy; s.vy+=0.03; s.a-=0.015;
+      if(s.a<=0) { stars.splice(i,1); continue; }
+      ctx.globalAlpha = Math.max(0,s.a);
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle='#ffffff'; ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    requestAnimationFrame(tick);
+  }
+  tick();
+
+  // ===== Chips micro-interaction =====
+  document.querySelectorAll('[data-chip]').forEach(ch=>{
+    ch.addEventListener('click', ()=> spawn(ch.getBoundingClientRect().left+ch.offsetWidth/2, ch.getBoundingClientRect().top));
+  });
+
+  // ===== Konami Code Easter Egg =====
+  const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  const buf=[];
+  addEventListener('keydown', (e)=>{
+    buf.push(e.key); if(buf.length>KONAMI.length) buf.shift();
+    if(KONAMI.every((k,i)=>buf[i]?.toLowerCase()===k.toLowerCase())) confetti();
+  });
+  function confetti(){
+    const emojis = ['✨','🌟','💫','🌸','🪄','⭐'];
+    for(let i=0;i<80;i++){
+      const span = document.createElement('span');
+      span.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+      span.style.position='fixed';
+      span.style.left = Math.random()*100+'vw';
+      span.style.top = '-10vh';
+      span.style.fontSize = (Math.random()*22+14)+'px';
+      span.style.transition = 'transform 2.2s ease, opacity 2.2s ease';
+      span.style.zIndex = 9999;
+      document.body.appendChild(span);
+      requestAnimationFrame(()=>{
+        span.style.transform = `translateY(${110+Math.random()*20}vh) rotate(${(Math.random()*360)}deg)`;
+        span.style.opacity = .2 + Math.random()*.7;
+      });
+      setTimeout(()=> span.remove(), 2300);
+    }
+  }
+
+  // ===== Save/Reset + remember prefs =====
+  document.getElementById('reset').addEventListener('click', ()=>{
+    localStorage.clear(); location.reload();
+  });
+
+  // Allows downloading the current HTML as a file
+  document.getElementById('saveFile').addEventListener('click', (e)=>{
+    e.preventDefault();
+    const blob = new Blob([document.documentElement.outerHTML], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'sri-playground.html'; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // ===== Restore on load =====
+  (function init(){
+    const savedName = load('name'); if(savedName){ setName(savedName); nameInput.placeholder = savedName; }
+    const theme = load('theme'); if(theme){ setTheme(theme); }
+  })();
+
+  // Tiny progressive enhancement: if user picks a color, set accent
+  picker.addEventListener('input', ()=>{
+    document.documentElement.style.setProperty('--accent', picker.value);
+  });
+</script>
+</body>
+</html>
